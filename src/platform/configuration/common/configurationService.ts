@@ -566,6 +566,8 @@ export type CommitMessageGenerationInstruction = { file: string } | { text: stri
 export const XTabProviderId = 'XtabProvider';
 
 export namespace ConfigKey {
+	/** Development-only mode for local/BYOK providers without GitHub services. */
+	export const OfflineMode = defineSetting<boolean>('chat.offlineMode', ConfigType.Simple, false);
 
 	/**
 	 * These settings are defined in the completions extensions and shared.

@@ -1,0 +1,62 @@
+{
+	"name": "copilot",
+	"displayName": "GitHub Copilot Compatibility Shim",
+	"description": "Local VSCodium compatibility shim that satisfies the host defaultChatAgent GitHub.copilot extension slot.",
+	"version": "0.44.12",
+	"publisher": "GitHub",
+	"repository": "https://github.com/microsoft/vscode-copilot-chat",
+	"license": "MIT",
+	"engines": {
+		"vscode": ">=1.116.0"
+	},
+	"extensionKind": [
+		"ui",
+		"workspace"
+	],
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": true
+		}
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onStartupFinished",
+		"onCommand:github.copilot.signIn",
+		"onCommand:github.copilot.toggleStatusMenu",
+		"onCommand:github.copilot.refreshToken",
+		"onCommand:github.copilot.open.walkthrough",
+		"onCommand:github.copilot.git.generateCommitMessage",
+		"onCommand:github.copilot.git.resolveMergeConflicts"
+	],
+	"main": "./extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "github.copilot.signIn",
+				"title": "Refresh Copilot Token"
+			},
+			{
+				"command": "github.copilot.toggleStatusMenu",
+				"title": "Toggle Copilot Status Menu"
+			},
+			{
+				"command": "github.copilot.refreshToken",
+				"title": "Refresh Copilot Chat Token"
+			},
+			{
+				"command": "github.copilot.open.walkthrough",
+				"title": "Open Copilot Chat Walkthrough"
+			},
+			{
+				"command": "github.copilot.git.generateCommitMessage",
+				"title": "Generate Commit Message"
+			},
+			{
+				"command": "github.copilot.git.resolveMergeConflicts",
+				"title": "Resolve Merge Conflicts"
+			}
+		]
+	}
+}

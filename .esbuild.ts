@@ -323,6 +323,17 @@ async function moveSourceMapsToSeparateDir(): Promise<void> {
 	}
 }
 
+async function copyRuntimeAssets(): Promise<void> {
+	const runtimeAssets = [
+		'node_modules/@github/blackbird-external-ingest-utils/pkg/nodejs/external_ingest_utils_bg.wasm',
+	];
+
+	await mkdir('./dist', { recursive: true });
+	for (const asset of runtimeAssets) {
+		await copyFile(asset, path.join('./dist', path.basename(asset)));
+	}
+}
+
 async function main() {
 	if (!isDev) {
 		applyPackageJsonPatch(isPreRelease);
@@ -408,6 +419,8 @@ async function main() {
 			esbuild.build(typeScriptServerPluginBuildOptions),
 			esbuild.build(webviewBuildOptions),
 		]);
+
+		await copyRuntimeAssets();
 
 		// Move source maps to separate directory so they're not packaged with the extension
 		await moveSourceMapsToSeparateDir();

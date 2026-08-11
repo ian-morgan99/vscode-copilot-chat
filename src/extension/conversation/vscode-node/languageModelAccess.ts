@@ -238,11 +238,20 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 		const models: vscode.LanguageModelChatInformation[] = [];
 		const allEndpoints = await this._endpointProvider.getAllChatEndpoints();
 		const chatEndpoints = allEndpoints.filter(e => e.showInModelPicker || e.model === 'gpt-4o-mini');
-		const autoEndpoint = await this._automodeService.resolveAutoModeEndpoint(undefined, allEndpoints);
-		chatEndpoints.push(autoEndpoint);
+		const autoEndpoint = session
+			? await this._automodeService.resolveAutoModeEndpoint(undefined, allEndpoints).catch((e) => {
+				this._logService.warn(`[LanguageModelAccess] Auto model is not available: ${e instanceof Error ? e.message : String(e)}`);
+				return undefined;
+			})
+			: undefined;
+		if (autoEndpoint) {
+			chatEndpoints.push(autoEndpoint);
+		}
 		let defaultChatEndpoint: IChatEndpoint;
 		const defaultExpModel = this._expService.getTreatmentVariable<string>('chat.defaultLanguageModel')?.replace('copilot/', '');
-		if (this._authenticationService.copilotToken?.isNoAuthUser || !defaultExpModel || defaultExpModel === AutoChatEndpoint.pseudoModelId) {
+		if (!autoEndpoint) {
+			defaultChatEndpoint = chatEndpoints[0];
+		} else if (this._authenticationService.copilotToken?.isNoAuthUser || !defaultExpModel || defaultExpModel === AutoChatEndpoint.pseudoModelId) {
 			// No auth, no experiment, and exp that sets auto to default all get default model
 			defaultChatEndpoint = autoEndpoint;
 		} else {
@@ -441,7 +450,7 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 			return copilotToken;
 		} catch (e) {
 			this._logService.warn('[LanguageModelAccess] LanguageModel/Embeddings are not available without auth token');
-			this._logService.error(e);
+			this._logService.warn(e instanceof Error ? e.message : String(e));
 			return undefined;
 		}
 	}
