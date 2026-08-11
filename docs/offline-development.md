@@ -27,6 +27,12 @@ GitHub-dependent features fail closed. Select a configured local or BYOK model i
 
 This mode does not automatically configure LM Studio, vLLM, Ollama, or another inference server. Configure an OpenAI-compatible provider through the extension's model-management UI and use the server's `/v1` base URL.
 
+## VSCodium compatibility
+
+Current VSCodium builds whitelist `GitHub.copilot-chat` for the proposed APIs used by this extension. The extension requests the unversioned `chatProvider` proposal so it can follow the API version supplied by the host; pinning an older proposal such as `chatProvider@4` prevents installation on newer hosts.
+
+VSCodium may also expect a companion extension in the `GitHub.copilot` product slot. The source-only shim in `resources/codium/copilot-compat-shim` satisfies that slot and forwards its small command surface to Copilot Chat. The shim does not grant proposed APIs and does not provide authentication, model access, or telemetry.
+
 ## Verification
 
 Run the focused security regression tests and the standard build gates:

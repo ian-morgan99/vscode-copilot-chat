@@ -31,6 +31,11 @@
 		"onCommand:github.copilot.git.resolveMergeConflicts"
 	],
 	"main": "./extension.js",
+	"files": [
+		"extension.js",
+		"LICENSE",
+		"README.md"
+	],
 	"contributes": {
 		"commands": [
 			{

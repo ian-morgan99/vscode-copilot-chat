@@ -121,7 +121,7 @@
 		"testObserver",
 		"aiTextSearchProvider@2",
 		"chatParticipantPrivate@15",
-		"chatProvider@4",
+		"chatProvider",
 		"contribDebugCreateConfiguration",
 		"chatReferenceDiagnostic",
 		"textSearchProvider2",
