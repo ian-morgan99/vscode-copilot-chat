@@ -25,7 +25,7 @@ export class CopilotTokenManagerImpl extends Disposable implements ICompletionsC
 	private tokenRefetcher = new ThrottledDelayer(5_000);
 	private _token: CopilotToken | undefined;
 	get token() {
-		void this.tokenRefetcher.trigger(() => this.updateCachedToken());
+		void this.tokenRefetcher.trigger(() => this.updateCachedToken()).catch(() => undefined);
 		return this._token;
 	}
 
@@ -35,8 +35,8 @@ export class CopilotTokenManagerImpl extends Disposable implements ICompletionsC
 	) {
 		super();
 
-		this.updateCachedToken();
-		this._register(this.authenticationService.onDidAuthenticationChange(() => this.updateCachedToken()));
+		void this.updateCachedToken().catch(() => undefined);
+		this._register(this.authenticationService.onDidAuthenticationChange(() => void this.updateCachedToken().catch(() => undefined)));
 	}
 
 	/**

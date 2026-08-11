@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { ChatLocation } from '../../platform/chat/common/commonTypes';
+import { packageJson } from '../../platform/env/common/packagejson';
 
 export const enum Intent {
 	Explain = 'explain',
@@ -81,4 +82,4 @@ export function getAgentForIntent(intentId: Intent, location: ChatLocation): { a
 	}
 }
 
-export const EXTENSION_ID = 'GitHub.copilot-chat';
+export const EXTENSION_ID = `${packageJson.publisher}.${packageJson.name}`;

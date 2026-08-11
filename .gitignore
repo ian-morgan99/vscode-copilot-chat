@@ -62,3 +62,7 @@ test/aml/out
 .agents/skills/.local/
 .github/skills/.local/
 *.vsix
+
+# LM Studio per-session context files (auto-generated)
+.lmstudio-context/
+.lmstudio/

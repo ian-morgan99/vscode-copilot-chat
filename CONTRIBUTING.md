@@ -347,9 +347,17 @@ You can run the extension from Code OSS Desktop, provided that you follow along 
       "github": [
          "github.copilot-chat"
       ]
+   },
+   "defaultChatAgent": {
+      "extensionId": "GitHub.copilot-chat",
+      "chatExtensionId": "GitHub.copilot-chat"
    }
 }
 ```
+
+For VSCodium/Codium builds, use `resources/codium/product.overrides.json` as the starting point. It sets both the default completions extension ID and the default chat extension ID to this extension so the chat setup flow does not try to resolve a separate `github.copilot-chat` dependency.
+
+For local-provider testing without GitHub authentication, see [Offline development mode](./docs/offline-development.md). This is a development facility, not an emulation of GitHub services: cloud-backed features remain unavailable and fail closed.
 
 ### Web
 

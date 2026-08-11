@@ -231,11 +231,11 @@ export class ModelMetadataFetcher extends Disposable implements IModelMetadataFe
 		}
 		const requestStartTime = Date.now();
 
-		const copilotToken = (await this._authService.getCopilotToken()).token;
 		const requestId = generateUuid();
 		const requestMetadata: RequestMetadata = { type: RequestType.Models, isModelLab: this._isModelLab };
 
 		try {
+			const copilotToken = (await this._authService.getCopilotToken()).token;
 			const response = await this._instantiationService.invokeFunction(getRequest, {
 				endpointOrUrl: requestMetadata,
 				secretKey: copilotToken,

@@ -10,6 +10,8 @@ import { IAuthenticationService } from '../../../platform/authentication/common/
 import { ICopilotTokenManager } from '../../../platform/authentication/common/copilotTokenManager';
 import { StaticGitHubAuthenticationService } from '../../../platform/authentication/common/staticGitHubAuthenticationService';
 import { createStaticGitHubTokenProvider, getOrCreateTestingCopilotTokenManager } from '../../../platform/authentication/node/copilotTokenManager';
+import { OfflineAuthenticationService } from '../../../platform/authentication/node/offlineAuthenticationService';
+import { OfflineCopilotTokenManager } from '../../../platform/authentication/node/offlineCopilotTokenManager';
 import { AuthenticationService } from '../../../platform/authentication/vscode-node/authenticationService';
 import { VSCodeCopilotTokenManager } from '../../../platform/authentication/vscode-node/copilotTokenManager';
 import { IChatAgentService } from '../../../platform/chat/common/chatAgents';
@@ -52,6 +54,7 @@ import { ILanguageContextService } from '../../../platform/languageServer/common
 import { ICompletionsFetchService } from '../../../platform/nesFetch/common/completionsFetchService';
 import { CompletionsFetchService } from '../../../platform/nesFetch/node/completionsFetchServiceImpl';
 import { IFetcherService } from '../../../platform/networking/common/fetcherService';
+import { IToolDeferralService } from '../../../platform/networking/common/toolDeferralService';
 import { ChatWebSocketManager, IChatWebSocketManager } from '../../../platform/networking/node/chatWebSocketManager';
 import { FetcherService } from '../../../platform/networking/vscode-node/fetcherServiceImpl';
 import { resolveOTelConfig } from '../../../platform/otel/common/otelConfig';
@@ -124,6 +127,7 @@ import { IPromptVariablesService } from '../../prompt/node/promptVariablesServic
 import { ITodoListContextProvider, TodoListContextProvider } from '../../prompt/node/todoListContextProvider';
 import { DevContainerConfigurationServiceImpl } from '../../prompt/vscode-node/devContainerConfigurationServiceImpl';
 import { ProductionEndpointProvider } from '../../prompt/vscode-node/endpointProviderImpl';
+import { OfflineEndpointProvider } from '../../prompt/vscode-node/offlineEndpointProvider';
 import { GitCommitMessageServiceImpl } from '../../prompt/vscode-node/gitCommitMessageServiceImpl';
 import { GitDiffService } from '../../prompt/vscode-node/gitDiffService';
 import { PromptVariablesServiceImpl } from '../../prompt/vscode-node/promptVariablesService';
@@ -137,7 +141,6 @@ import { FixCookbookService, IFixCookbookService } from '../../prompts/node/inli
 import { WorkspaceMutationManager } from '../../testing/node/setupTestsFileManager';
 import { AgentMemoryService, IAgentMemoryService } from '../../tools/common/agentMemoryService';
 import { IMemoryCleanupService, MemoryCleanupService } from '../../tools/common/memoryCleanupService';
-import { IToolDeferralService } from '../../../platform/networking/common/toolDeferralService';
 import { ToolDeferralService } from '../../tools/common/toolDeferralService';
 import { IToolsService } from '../../tools/common/toolsService';
 import { ToolsService } from '../../tools/vscode-node/toolsService';
@@ -157,6 +160,9 @@ import { registerServices as registerCommonServices } from '../vscode/services';
 
 export function registerServices(builder: IInstantiationServiceBuilder, extensionContext: ExtensionContext): void {
 	const isTestMode = extensionContext.extensionMode === ExtensionMode.Test;
+	const configuredOfflineMode = workspace.getConfiguration('github.copilot.chat').get<boolean>('offlineMode', false);
+	const offlineMode = process.env.COPILOT_CHAT_OFFLINE === '1'
+		|| (extensionContext.extensionMode !== ExtensionMode.Production && configuredOfflineMode);
 
 	registerCommonServices(builder, extensionContext);
 
@@ -181,7 +187,10 @@ export function registerServices(builder: IInstantiationServiceBuilder, extensio
 	const internalAIKey = extensionContext.extension.packageJSON.internalAIKey ?? '';
 	const internalLargeEventAIKey = extensionContext.extension.packageJSON.internalLargeStorageAriaKey ?? '';
 	const ariaKey = extensionContext.extension.packageJSON.ariaKey ?? '';
-	if (isTestMode || isScenarioAutomation) {
+	if (offlineMode) {
+		setupTelemetry(builder, extensionContext, internalAIKey, internalLargeEventAIKey, ariaKey, true);
+		builder.define(ICopilotTokenManager, new SyncDescriptor(OfflineCopilotTokenManager));
+	} else if (isTestMode || isScenarioAutomation) {
 		setupTelemetry(builder, extensionContext, internalAIKey, internalLargeEventAIKey, ariaKey);
 		// If we're in testing mode, then most code will be called from an actual test,
 		// and not from here. However, some objects will capture the `accessor` we pass
@@ -194,7 +203,11 @@ export function registerServices(builder: IInstantiationServiceBuilder, extensio
 		builder.define(ICopilotTokenManager, new SyncDescriptor(VSCodeCopilotTokenManager));
 	}
 
-	if (isScenarioAutomation) {
+	if (offlineMode) {
+		builder.define(IAuthenticationService, new SyncDescriptor(OfflineAuthenticationService));
+		builder.define(IEndpointProvider, new SyncDescriptor(OfflineEndpointProvider));
+		builder.define(IIgnoreService, new SyncDescriptor(NullIgnoreService));
+	} else if (isScenarioAutomation) {
 		builder.define(IAuthenticationService, new SyncDescriptor(StaticGitHubAuthenticationService, [createStaticGitHubTokenProvider()]));
 		builder.define(IEndpointProvider, new SyncDescriptor(ScenarioAutomationEndpointProviderImpl));
 		builder.define(IIgnoreService, new SyncDescriptor(NullIgnoreService));
@@ -310,9 +323,9 @@ function setupMSFTExperimentationService(builder: IInstantiationServiceBuilder, 
 	}
 }
 
-function setupTelemetry(builder: IInstantiationServiceBuilder, extensionContext: ExtensionContext, internalAIKey: string, internalLargeEventAIKey: string, externalAIKey: string) {
+function setupTelemetry(builder: IInstantiationServiceBuilder, extensionContext: ExtensionContext, internalAIKey: string, internalLargeEventAIKey: string, externalAIKey: string, offlineMode = false) {
 
-	if (ExtensionMode.Production === extensionContext.extensionMode && !isScenarioAutomation) {
+	if (ExtensionMode.Production === extensionContext.extensionMode && !isScenarioAutomation && !offlineMode) {
 		builder.define(ITelemetryService, new SyncDescriptor(TelemetryService, [
 			extensionContext.extension.packageJSON.name,
 			internalAIKey,

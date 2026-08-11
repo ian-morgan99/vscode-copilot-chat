@@ -52,6 +52,9 @@ class AuthUpgradeAsk extends Disposable {
 	private async waitForChatEnabled() {
 		try {
 			await this._authenticationService.getCopilotToken();
+			if (this._authenticationService.copilotToken) {
+				return;
+			}
 		} catch (error) {
 			// likely due to the user canceling the auth flow
 			this._logService.error(error, 'Failed to get copilot token');
